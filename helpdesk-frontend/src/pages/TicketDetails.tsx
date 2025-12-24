@@ -13,7 +13,8 @@ import {
   Avatar
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { showSuccessAlert, showErrorAlert } from '../utils/alertUtils';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { showSuccessAlert, showErrorAlert, showConfirmDialog } from '../utils/alertUtils';
 
 const TicketDetails = () => {
   const { id } = useParams();
@@ -62,6 +63,26 @@ const TicketDetails = () => {
       showErrorAlert('Update failed');
     }
   });
+
+  const deleteTicketMutation = useMutation({
+    mutationFn: () => api.delete(`/tickets/${id}`),
+    onSuccess: () => {
+      showSuccessAlert('Ticket deleted!');
+      navigate(state.user?.role === 'admin' ? '/admin' : '/tickets');
+    },
+    onError: () => {
+      showErrorAlert('Failed to delete ticket');
+    }
+  });
+
+  const handleDeleteTicket = () => {
+    showConfirmDialog(
+      'Delete Ticket',
+      'Are you sure you want to delete this ticket? This action cannot be undone.',
+      'Delete',
+      () => deleteTicketMutation.mutate()
+    );
+  };
   if (ticketLoading || commentsLoading) {
     return (
       <Container sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
@@ -87,12 +108,24 @@ const TicketDetails = () => {
   }
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Button 
-        onClick={goBack}
-        sx={{ mb: 3 }}
-      >
-        ← Back
-      </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Button 
+          onClick={goBack}
+        >
+          ← Back
+        </Button>
+        {state.user?.role === 'admin' && (
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={handleDeleteTicket}
+            disabled={deleteTicketMutation.isPending}
+          >
+            {deleteTicketMutation.isPending ? 'Deleting...' : 'Delete Ticket'}
+          </Button>
+        )}
+      </Box>
       <Paper sx={{ p: 4, mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
           <Box sx={{ flex: 1 }}>
@@ -257,30 +290,38 @@ const TicketDetails = () => {
           </Alert>
         )}
         <Divider sx={{ my: 3 }} />
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            placeholder="Write your comment here..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            disabled={commentMutation.isPending}
-          />
-        </Box>
-        <Button
-          variant="contained"
-          endIcon={<SendIcon />}
-          onClick={() => {
-            if (newComment.trim()) {
-              commentMutation.mutate(newComment);
-            }
-          }}
-          disabled={commentMutation.isPending || !newComment.trim()}
-          sx={{ mt: 2 }}
-        >
-          {commentMutation.isPending ? "Sending..." : "Post Comment"}
-        </Button>
+        {ticket.status_name?.toLowerCase() === 'closed' ? (
+          <Alert severity="warning">
+            This ticket is closed. No comments can be added.
+          </Alert>
+        ) : (
+          <>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                placeholder="Write your comment here..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                disabled={commentMutation.isPending}
+              />
+            </Box>
+            <Button
+              variant="contained"
+              endIcon={<SendIcon />}
+              onClick={() => {
+                if (newComment.trim()) {
+                  commentMutation.mutate(newComment);
+                }
+              }}
+              disabled={commentMutation.isPending || !newComment.trim()}
+              sx={{ mt: 2 }}
+            >
+              {commentMutation.isPending ? "Sending..." : "Post Comment"}
+            </Button>
+          </>
+        )}
       </Paper>
     </Container>
   );

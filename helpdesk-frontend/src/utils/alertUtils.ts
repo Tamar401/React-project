@@ -20,7 +20,7 @@ export const showInfoAlert = (title: string, message?: string) => {
     confirmButtonText: 'OK'
   });
 };
-export const showConfirmDialog = (title: string, message?: string) => {
+export const showConfirmDialog = (title: string, message?: string, confirmText: string = 'Yes, continue', onConfirm?: () => void) => {
   return Swal.fire({
     title: title,
     text: message,
@@ -28,7 +28,11 @@ export const showConfirmDialog = (title: string, message?: string) => {
     showCancelButton: true,
     confirmButtonColor: '#1976d2',
     cancelButtonColor: '#d32f2f',
-    confirmButtonText: 'Yes, continue',
+    confirmButtonText: confirmText,
     cancelButtonText: 'Cancel'
+  }).then((result) => {
+    if (result.isConfirmed && onConfirm) {
+      onConfirm();
+    }
   });
 };
