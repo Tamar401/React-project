@@ -26,7 +26,16 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 const AuthContext = createContext<{ state: AuthState; dispatch: React.Dispatch<AuthAction> } | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(authReducer, {
-    user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
+    user: (() => {
+      try {
+        const userData = localStorage.getItem('user');
+        return userData ? JSON.parse(userData) : null;
+      } catch (error) {
+        console.error('Failed to parse user data from localStorage:', error);
+        localStorage.removeItem('user');
+        return null;
+      }
+    })(),
     token: localStorage.getItem('token'),
     isAuthenticated: !!localStorage.getItem('token'),
   });

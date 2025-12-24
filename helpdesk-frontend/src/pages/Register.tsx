@@ -17,11 +17,25 @@ const Register = () => {
   const { dispatch } = useAuth();
   const { register, handleSubmit, formState: { errors }, watch } = useForm<RegisterForm>();
   const password = watch("password");
+  
   const registerMutation = useMutation({
-    mutationFn: (data: Omit<RegisterForm, 'passwordConfirm'>) => 
-      api.post('/auth/register', data),
+    mutationFn: async (data: Omit<RegisterForm, 'passwordConfirm'>) => {
+      const registerResponse = await api.post('/auth/register', data);
+      
+      // If backend returns token and user, use them directly
+      if (registerResponse.data.token && registerResponse.data.user) {
+        return registerResponse.data;
+      }
+      
+      // If backend only returns id, do automatic login
+      const loginResponse = await api.post('/auth/login', { 
+        email: data.email, 
+        password: data.password 
+      });
+      return loginResponse.data;
+    },
     onSuccess: (response) => {
-      const { token, user } = response.data;
+      const { token, user } = response;
       dispatch({ type: 'LOGIN', payload: { user, token } });
       Swal.fire({ icon: 'success', title: 'Account created!', timer: 1500, showConfirmButton: false });
       navigate('/tickets');
@@ -31,6 +45,7 @@ const Register = () => {
       Swal.fire("Error", message, "error");
     }
   });
+  
   const onSubmit = (data: RegisterForm) => {
     const { passwordConfirm, ...submitData } = data;
     registerMutation.mutate(submitData);
