@@ -114,7 +114,8 @@ const TicketDetails = () => {
         >
           ← Back
         </Button>
-        {state.user?.role === 'admin' && (
+        {/* TODO: Enable delete button when DELETE /tickets/:id endpoint is available in backend */}
+        {false && state.user?.role === 'admin' && (
           <Button
             variant="contained"
             color="error"
