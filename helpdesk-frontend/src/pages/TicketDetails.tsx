@@ -70,8 +70,10 @@ const TicketDetails = () => {
       showSuccessAlert('Ticket deleted!');
       navigate(state.user?.role === 'admin' ? '/admin' : '/tickets');
     },
-    onError: () => {
-      showErrorAlert('Failed to delete ticket');
+    onError: (error: any) => {
+      console.error('Delete error:', error);
+      const message = error.response?.data?.message || 'Failed to delete ticket';
+      showErrorAlert(message);
     }
   });
 
@@ -114,8 +116,7 @@ const TicketDetails = () => {
         >
           ← Back
         </Button>
-        {/* TODO: Enable delete button when DELETE /tickets/:id endpoint is available in backend */}
-        {false && state.user?.role === 'admin' && (
+        {state.user?.role === 'admin' && (
           <Button
             variant="contained"
             color="error"
